@@ -1,4 +1,4 @@
-report_planner_query_writer_instructions="""You are performing research for a report. 
+report_planner_query_writer_instructions="""你正在为一份报告进行调研。
 
 <Report topic>
 {topic}
@@ -9,19 +9,20 @@ report_planner_query_writer_instructions="""You are performing research for a re
 </Report organization>
 
 <Task>
-Your goal is to generate {number_of_queries} web search queries that will help gather information for planning the report sections. 
+你的目标是生成{number_of_queries}个网络搜索查询，以帮助收集规划报告各部分所需的信息。
 
-The queries should:
+这些查询应：
 
-1. Be related to the Report topic
-2. Help satisfy the requirements specified in the report organization
+1. 与报告主题相关
+2. 有助于满足报告组织结构中指定的要求
 
-Make the queries specific enough to find high-quality, relevant sources while covering the breadth needed for the report structure.
+使查询足够具体，以找到高质量、相关的资料来源，同时涵盖报告结构所需的广度。
 </Task>
 
 <Format>
-Call the Queries tool 
+调用查询工具
 </Format>
+
 """
 
 report_planner_instructions="""I want a plan for a report that is concise and focused.

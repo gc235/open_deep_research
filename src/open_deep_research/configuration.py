@@ -7,17 +7,17 @@ from langchain_core.language_models.chat_models import BaseChatModel
 from langchain_core.runnables import RunnableConfig
 from dataclasses import dataclass
 
-DEFAULT_REPORT_STRUCTURE = """Use this structure to create a report on the user-provided topic:
+DEFAULT_REPORT_STRUCTURE = """使用此结构为用户提供的主题创建报告：
 
-1. Introduction (no research needed)
-   - Brief overview of the topic area
+1. 引言（无需研究）
+- 主题领域的简要概述
 
-2. Main Body Sections:
-   - Each section should focus on a sub-topic of the user-provided topic
-   
-3. Conclusion
-   - Aim for 1 structural element (either a list of table) that distills the main body sections 
-   - Provide a concise summary of the report"""
+2. 主体部分：
+每个部分应聚焦于用户提供主题下的子主题
+
+3. 结论
+力求包含 1 个提炼正文部分主要内容的组织结构元素（列表或表格）
+提供报告的简要总结"""
 
 class SearchAPI(Enum):
     PERPLEXITY = "perplexity"
@@ -41,6 +41,8 @@ class Configuration:
     writer_model: str = "claude-3-5-sonnet-latest" # Defaults to claude-3-5-sonnet-latest
     search_api: SearchAPI = SearchAPI.TAVILY # Default to TAVILY
     search_api_config: Optional[Dict[str, Any]] = None 
+    base_url: Optional[str] = None
+    api_key: Optional[str] = None
 
     @classmethod
     def from_runnable_config(
