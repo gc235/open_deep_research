@@ -1,5 +1,6 @@
 import os
 import logging
+from pathlib import Path
 from typing import Literal
 
 from langchain.chat_models import init_chat_model
@@ -44,8 +45,13 @@ tracer_provider = register(
     auto_instrument=True
 )
 
+log_dir = Path("logs")
+log_dir.mkdir(exist_ok=True)
 # Configure logging
-logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
+logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s',
+                    filename=os.path.join(log_dir, 'open_deep_research.log'),
+                    filemode='a')
+# 'a' for append mode
 
 
 ## Nodes --
@@ -91,10 +97,11 @@ async def generate_report_plan(state: ReportState, config: RunnableConfig):
     logging.debug("Formatted system instructions for query generation: %s", system_instructions_query)
 
     # Generate queries
-    query_generation_message = """Generate search queries that will help with planning the sections of the report. 输出结果必须是JSON格式"""
+    query_generation_message = """Generate search queries that will help with planning the sections of the report. """
 
     results = structured_llm.invoke([
         SystemMessage(content=system_instructions_query),
+        SystemMessage(content=f'输出结果必须是JSON格式, pydantic json schema定义如下：\n {Queries.model_json_schema()}'),
         HumanMessage(content=query_generation_message)
     ])
     logging.debug("Generated queries: %s", results)
@@ -119,7 +126,7 @@ async def generate_report_plan(state: ReportState, config: RunnableConfig):
 
     # Report planner instructions
     planner_message = """Generate the sections of the report. Your response must include a 'sections' field containing a list of sections. 
-                        Each section must have: name, description, plan, research, and content fields.输出结果必须是JSON格式"""
+                        Each section must have: name, description, plan, research, and content fields."""
     logging.debug("Planner message: %s", planner_message)
 
     # Run the planner
@@ -140,6 +147,8 @@ async def generate_report_plan(state: ReportState, config: RunnableConfig):
     # Generate the report sections
     structured_llm = planner_llm.with_structured_output(Sections)
     report_sections = structured_llm.invoke([SystemMessage(content=system_instructions_sections),
+                                             SystemMessage(
+                                                 content=f'输出结果必须是JSON格式, pydantic json schema定义如下：\n {Sections.model_json_schema()}'),
                                              HumanMessage(content=planner_message)])
     logging.debug("Generated report sections: %s", report_sections)
 
@@ -216,9 +225,11 @@ def generate_queries(state: SectionState, config: RunnableConfig):
                                                            number_of_queries=number_of_queries)
     logging.debug("Formatted system instructions for query generation: %s", system_instructions)
 
-    query_generation_message = """Generate search queries on the provided topic.输出结果必须是JSON格式"""
+    query_generation_message = """Generate search queries on the provided topic."""
 
     queries = structured_llm.invoke([SystemMessage(content=system_instructions),
+                                     SystemMessage(
+                                         content=f'输出结果必须是JSON格式, pydantic json schema定义如下：\n {Queries.model_json_schema()}'),
                                      HumanMessage(content=query_generation_message)])
     logging.debug("Generated queries: %s", queries)
 
@@ -280,7 +291,7 @@ def write_section(state: SectionState, config: RunnableConfig) -> Command[Litera
 
     section_grader_message = ("Grade the report and consider follow-up questions for missing information. "
                               "If the grade is 'pass', return empty strings for all follow-up queries. "
-                              "If the grade is 'fail', provide specific search queries to gather missing information.输出结果必须是JSON格式")
+                              "If the grade is 'fail', provide specific search queries to gather missing information.")
     logging.debug("Section grader message: %s", section_grader_message)
 
     section_grader_instructions_formatted = section_grader_instructions.format(topic=topic,
@@ -307,6 +318,8 @@ def write_section(state: SectionState, config: RunnableConfig) -> Command[Litera
         logging.debug("Initialized reflection model without thinking budget: %s", planner_model)
 
     feedback = reflection_model.invoke([SystemMessage(content=section_grader_instructions_formatted),
+                                        SystemMessage(
+                                            content=f'输出结果必须是JSON格式, pydantic json schema定义如下：\n {Feedback.model_json_schema()}'),
                                         HumanMessage(content=section_grader_message)])
     logging.debug("Generated feedback: %s", feedback)
 
